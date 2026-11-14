@@ -1,0 +1,31 @@
+name: Build APK
+on: workflow_dispatch
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: unzip -q Mashaswape-App.zip
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.7"
+      - run: cd Mashaswape-App && gradle assembleDebug --no-daemon
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          pip install onnx numpy
+          python Mashaswape-App/prepare_models.py
+      - run: |
+          mkdir out
+          cp Mashaswape-App/app/build/outputs/apk/debug/*.apk out/Mashaswape.apk
+          cp /home/runner/mashaswape-models/* out/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Mashaswape
+          path: out
+          compression-level: 0
